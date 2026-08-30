@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/RagDocQa.Api/RagDocQa.Api.csproj" />
+  </Folder>
+</Solution>
