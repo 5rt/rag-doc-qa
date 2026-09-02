@@ -4,6 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddHttpClient<RagDocQa.Api.Ai.GeminiClient>();
 
 // Allow the Vite dev server to call this API. Never AllowAnyOrigin() —
 // that lets any site on the internet call your API from a visitor's browser.
