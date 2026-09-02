@@ -1,0 +1,24 @@
+﻿export interface Source {
+  fileName: string;
+  chunkIndex: number;
+  content: string;
+  score: number;
+}
+
+export interface AskResponse {
+  answer: string;
+  sources: Source[];
+}
+
+export interface UploadResponse {
+  documentId: string;
+  fileName: string;
+  chunkCount: number;
+}
+
+export interface DocumentSummary {
+  Id: string;
+  FileName: string;
+  ChunkCount: number;
+  UploadedUtc: string;
+}

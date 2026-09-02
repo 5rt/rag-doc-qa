@@ -50,6 +50,8 @@ public class GeminiClient(HttpClient http, IConfiguration config)
 
         var prompt = $"""
             Answer the question using only the numbered context below.
+            Keep the answer to two or three sentences. Be direct.
+            Write plain prose. No markdown, no bold, no bullet points.
             Cite the passages you used like [1] or [2].
             If the context does not contain the answer, reply exactly:
             "That is not covered in the uploaded documents."
