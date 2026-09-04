@@ -172,3 +172,30 @@ button:disabled { background: var(--rule); color: var(--muted); cursor: not-allo
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+.ask-form select {
+  appearance: none;
+  width: 100%;
+  max-width: 68ch;
+  padding: 0.6rem 2.2rem 0.6rem 0.75rem;
+  font: inherit;
+  color: #1F2328;
+  background-color: #FFFDF8;
+  border: 1px solid #D8D4C6;
+  border-radius: 3px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%232F5D50' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 0.7rem;
+}
+
+.ask-form select:focus-visible {
+  outline: 2px solid #2F5D50;
+  outline-offset: 2px;
+}
+
+.ask-form select:disabled {
+  color: #8A8578;
+  cursor: not-allowed;
+}
