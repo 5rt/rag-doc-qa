@@ -7,13 +7,36 @@ using RagDocQa.Api.Ai;
 using RagDocQa.Api.Ingest;
 using RagDocQa.Api.Search;
 using UglyToad.PdfPig;
+using UglyToad.PdfPig.Content;
 
 namespace RagDocQa.Api.Controllers;
+
+public record DocumentSummary(Guid Id, string FileName, int ChunkCount, DateTime UploadedUtc);
 
 [ApiController]
 [Route("api/documents")]
 public class DocumentsController(GeminiClient gemini, IConfiguration config) : ControllerBase
 {
+    /// <summary>
+    /// Rebuilds readable text from a PDF page. Page.Text concatenates the raw
+    /// glyph runs with no separators, which fuses words together and drops line
+    /// breaks entirely ("ResultAssessment completed"). Grouping words by their
+    /// vertical position recovers the original lines.
+    /// </summary>
+    private static string ExtractPageText(Page page)
+    {
+        var lines = page.GetWords()
+            // PDF coordinates start bottom-left, so descending Y is top-to-bottom.
+            // Rounding absorbs the sub-point baseline drift within a single line.
+            .GroupBy(w => Math.Round(w.BoundingBox.Bottom, 0))
+            .OrderByDescending(g => g.Key)
+            .Select(g => string.Join(" ", g
+                .OrderBy(w => w.BoundingBox.Left)
+                .Select(w => w.Text)));
+
+        return string.Join("\n", lines);
+    }
+
     [HttpPost]
     [RequestSizeLimit(20_000_000)]
     public async Task<IActionResult> Upload(IFormFile file)
@@ -35,7 +58,7 @@ public class DocumentsController(GeminiClient gemini, IConfiguration config) : C
                 await stream.CopyToAsync(buffer);
                 buffer.Position = 0;
                 using var pdf = PdfDocument.Open(buffer);
-                text = string.Join("\n", pdf.GetPages().Select(p => p.Text));
+                text = string.Join("\n\n", pdf.GetPages().Select(ExtractPageText));
             }
             else
             {
@@ -85,7 +108,7 @@ public class DocumentsController(GeminiClient gemini, IConfiguration config) : C
     public async Task<IActionResult> List()
     {
         await using var sql = new SqlConnection(config.GetConnectionString("Default"));
-        var docs = await sql.QueryAsync(
+        var docs = await sql.QueryAsync<DocumentSummary>(
             "SELECT Id, FileName, ChunkCount, UploadedUtc FROM Documents ORDER BY UploadedUtc DESC");
         return Ok(docs);
     }

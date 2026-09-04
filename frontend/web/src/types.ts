@@ -17,8 +17,13 @@ export interface UploadResponse {
 }
 
 export interface DocumentSummary {
-  Id: string;
-  FileName: string;
-  ChunkCount: number;
-  UploadedUtc: string;
+  id: string;
+  fileName: string;
+  chunkCount: number;
+  uploadedUtc: string;
+}
+
+export interface AskRequest {
+  question: string;
+  documentId?: string;
 }
