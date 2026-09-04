@@ -1,7 +1,7 @@
 ﻿import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { askQuestion } from "../api";
-import type { AskResponse } from "../types";
+import { askQuestion, listDocuments } from "../api";
+import type { AskResponse, DocumentSummary } from "../types";
 import Seo from "../seo/Seo";
 
 export default function AskPage() {
@@ -10,6 +10,14 @@ export default function AskPage() {
   const [result, setResult] = useState<AskResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const controller = useRef<AbortController | null>(null);
+  const [docs, setDocs] = useState<DocumentSummary[]>([]);
+  const [documentId, setDocumentId] = useState("");
+
+  useEffect(() => {
+    listDocuments()
+      .then(setDocs)
+      .catch(() => setDocs([]));
+  }, []);
 
   // Cancel any in-flight request if the user navigates away, so we never
   // call setState on an unmounted component.
@@ -23,7 +31,11 @@ export default function AskPage() {
     setBusy(true);
     setError(null);
     try {
-      const data = await askQuestion(question, controller.current.signal);
+      const data = await askQuestion(
+        question,
+        documentId || undefined,
+        controller.current.signal,
+      );
       setResult(data);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") return;
@@ -32,6 +44,8 @@ export default function AskPage() {
       setBusy(false);
     }
   }
+
+  const scopeName = docs.find((d) => d.id === documentId)?.fileName;
 
   return (
     <>
@@ -47,6 +61,21 @@ export default function AskPage() {
       </p>
 
       <div className="ask-form">
+        <label htmlFor="doc-filter">Search in</label>
+        <select
+          id="doc-filter"
+          value={documentId}
+          onChange={(e) => setDocumentId(e.target.value)}
+          disabled={busy || docs.length === 0}
+        >
+          <option value="">All documents</option>
+          {docs.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.fileName}
+            </option>
+          ))}
+        </select>
+
         <label htmlFor="question">Your question</label>
         <textarea
           id="question"
@@ -79,8 +108,14 @@ export default function AskPage() {
           <h2>Sources</h2>
           {result.sources.length === 0 ? (
             <p>
-              Nothing indexed yet. <Link to="/upload">Upload a document</Link>{" "}
-              first.
+              {scopeName ? (
+                <>No passages matched in {scopeName}. Try All documents.</>
+              ) : (
+                <>
+                  Nothing indexed yet.{" "}
+                  <Link to="/upload">Upload a document</Link> first.
+                </>
+              )}
             </p>
           ) : (
             <ol className="sources">

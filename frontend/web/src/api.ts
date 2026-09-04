@@ -22,11 +22,15 @@ export async function uploadDocument(file: File, signal?: AbortSignal) {
   return handle<UploadResponse>(response);
 }
 
-export async function askQuestion(question: string, signal?: AbortSignal) {
+export async function askQuestion(
+  question: string,
+  documentId?: string,
+  signal?: AbortSignal,
+) {
   const response = await fetch(`${BASE}/api/ask`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, documentId }),
     signal,
   });
   return handle<AskResponse>(response);

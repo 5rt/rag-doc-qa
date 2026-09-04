@@ -7,7 +7,7 @@ using RagDocQa.Api.Search;
 
 namespace RagDocQa.Api.Controllers;
 
-public record AskRequest(string Question);
+public record AskRequest(string Question, string? DocumentId);
 
 [ApiController]
 [Route("api/ask")]
@@ -18,6 +18,14 @@ public class AskController(GeminiClient gemini, IConfiguration config) : Control
     {
         if (string.IsNullOrWhiteSpace(request.Question))
             return BadRequest(new { error = "Ask a question first." });
+
+        Guid? documentId = null;
+        if (!string.IsNullOrWhiteSpace(request.DocumentId))
+        {
+            if (!Guid.TryParse(request.DocumentId, out var parsed))
+                return BadRequest(new { error = "documentId is not a valid id." });
+            documentId = parsed;
+        }
 
         // 1. Embed the question, using the QUERY task type this time
         var questionVector = await gemini.EmbedAsync(request.Question, "RETRIEVAL_QUERY");
@@ -40,9 +48,14 @@ public class AskController(GeminiClient gemini, IConfiguration config) : Control
                         KNearestNeighborsCount = 5,
                         Fields = { "contentVector" }
                     }
-                }
+                },
+                FilterMode = VectorFilterMode.PreFilter
             }
         };
+
+        if (documentId is not null)
+            options.Filter = $"documentId eq '{documentId}'";
+
         options.Select.Add("content");
         options.Select.Add("fileName");
         options.Select.Add("chunkIndex");
@@ -57,15 +70,21 @@ public class AskController(GeminiClient gemini, IConfiguration config) : Control
             passages.Add(content);
             sources.Add(new
             {
-                fileName   = hit.Document["fileName"].ToString(),
+                fileName = hit.Document["fileName"].ToString(),
                 chunkIndex = hit.Document["chunkIndex"],
                 content,
-                score      = hit.Score
+                score = hit.Score
             });
         }
 
         if (passages.Count == 0)
-            return Ok(new { answer = "No documents have been uploaded yet.", sources });
+            return Ok(new
+            {
+                answer = documentId is null
+                    ? "No documents have been uploaded yet."
+                    : "That document has no matching passages.",
+                sources
+            });
 
         // 3. Ask the model, giving it only those passages
         var answer = await gemini.AnswerAsync(request.Question, passages);
