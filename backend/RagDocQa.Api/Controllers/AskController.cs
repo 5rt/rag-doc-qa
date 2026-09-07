@@ -1,4 +1,5 @@
-﻿using Azure;
+﻿using System.Net;
+using Azure;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,9 @@ public record AskRequest(string Question, string? DocumentId);
 [Route("api/ask")]
 public class AskController(GeminiClient gemini, IConfiguration config) : ControllerBase
 {
+    private const string QuotaMessage =
+        "The daily Gemini quota is used up. Try again tomorrow.";
+
     [HttpPost]
     public async Task<IActionResult> Ask([FromBody] AskRequest request)
     {
@@ -22,13 +26,27 @@ public class AskController(GeminiClient gemini, IConfiguration config) : Control
         Guid? documentId = null;
         if (!string.IsNullOrWhiteSpace(request.DocumentId))
         {
+            // Parsing before use keeps anything arbitrary out of the OData
+            // filter, and a bad id costs no embedding quota.
             if (!Guid.TryParse(request.DocumentId, out var parsed))
                 return BadRequest(new { error = "documentId is not a valid id." });
             documentId = parsed;
         }
 
         // 1. Embed the question, using the QUERY task type this time
-        var questionVector = await gemini.EmbedAsync(request.Question, "RETRIEVAL_QUERY");
+        float[] questionVector;
+        try
+        {
+            questionVector = await gemini.EmbedAsync(request.Question, "RETRIEVAL_QUERY");
+        }
+        catch (GeminiException ex) when (ex.Status == HttpStatusCode.TooManyRequests)
+        {
+            return StatusCode(429, new { error = QuotaMessage });
+        }
+        catch (GeminiException)
+        {
+            return StatusCode(502, new { error = "The embedding service failed. Try again." });
+        }
 
         // 2. Find the 5 nearest passages
         var searchClient = new SearchClient(
@@ -49,6 +67,9 @@ public class AskController(GeminiClient gemini, IConfiguration config) : Control
                         Fields = { "contentVector" }
                     }
                 },
+                // PreFilter narrows first, then runs KNN over what is left.
+                // PostFilter would take the global top 5 and then discard other
+                // documents hits, so a filtered ask could return almost nothing.
                 FilterMode = VectorFilterMode.PreFilter
             }
         };
@@ -87,8 +108,18 @@ public class AskController(GeminiClient gemini, IConfiguration config) : Control
             });
 
         // 3. Ask the model, giving it only those passages
-        var answer = await gemini.AnswerAsync(request.Question, passages);
-
-        return Ok(new { answer, sources });
+        try
+        {
+            var answer = await gemini.AnswerAsync(request.Question, passages);
+            return Ok(new { answer, sources });
+        }
+        catch (GeminiException ex) when (ex.Status == HttpStatusCode.TooManyRequests)
+        {
+            return StatusCode(429, new { error = QuotaMessage });
+        }
+        catch (GeminiException)
+        {
+            return StatusCode(502, new { error = "The answering service failed. Try again." });
+        }
     }
 }
