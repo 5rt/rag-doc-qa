@@ -1,7 +1,19 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace RagDocQa.Api.Ai;
+
+/// <summary>
+/// Thrown when Gemini returns a non-success status. Carries the status code so
+/// callers can tell a quota problem (429) apart from a genuine failure, which
+/// EnsureSuccessStatusCode could not.
+/// </summary>
+public sealed class GeminiException(HttpStatusCode status, string detail)
+    : Exception($"Gemini returned {(int)status} {status}: {detail}")
+{
+    public HttpStatusCode Status { get; } = status;
+}
 
 public class GeminiClient(HttpClient http, IConfiguration config)
 {
@@ -12,11 +24,6 @@ public class GeminiClient(HttpClient http, IConfiguration config)
         ?? throw new InvalidOperationException("Llm:ApiKey is not configured.");
 
     /// <summary>Turns one piece of text into a 768-number vector.</summary>
-    /// <param name="taskType">
-    /// RETRIEVAL_DOCUMENT when storing a passage, RETRIEVAL_QUERY when searching.
-    /// Questions and answers are not semantically similar, so using the matching
-    /// task type on each side measurably improves retrieval.
-    /// </param>
     public async Task<float[]> EmbedAsync(string text, string taskType)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, $"{Base}/models/{Embed}:embedContent")
@@ -32,7 +39,7 @@ public class GeminiClient(HttpClient http, IConfiguration config)
         request.Headers.Add("x-goog-api-key", Key);
 
         var response = await http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+        await ThrowIfFailedAsync(response);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
         var values = json.GetProperty("embedding").GetProperty("values")
@@ -73,12 +80,24 @@ public class GeminiClient(HttpClient http, IConfiguration config)
         request.Headers.Add("x-goog-api-key", Key);
 
         var response = await http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+        await ThrowIfFailedAsync(response);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
         return json.GetProperty("candidates")[0]
                    .GetProperty("content").GetProperty("parts")[0]
                    .GetProperty("text").GetString() ?? "";
+    }
+
+    private static async Task ThrowIfFailedAsync(HttpResponseMessage response)
+    {
+        if (response.IsSuccessStatusCode) return;
+
+        // Truncated because the body echoes back parts of the request, and a
+        // failed embed request contains the document text.
+        var body = await response.Content.ReadAsStringAsync();
+        var detail = body.Length <= 300 ? body : body.Substring(0, 300) + "...";
+
+        throw new GeminiException(response.StatusCode, detail);
     }
 
     private static float[] Normalize(float[] v)
