@@ -1,8 +1,9 @@
 ﻿:root {
   --paper: #FAFAF7;
   --ink: #1F2328;
-  --muted: #6E7169;
+  --muted: #66695F;
   --rule: #DDDCD5;
+  --field-border: #8C8776;
   --accent: #2F5D50;
   --highlight: #FBF3C9;
 
@@ -83,7 +84,7 @@ textarea, input[type="file"] {
   font: inherit;
   color: inherit;
   background: #fff;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--field-border);
   border-radius: 3px;
   padding: 0.7rem 0.8rem;
   width: 100%;
@@ -157,7 +158,7 @@ button:disabled { background: var(--rule); color: var(--muted); cursor: not-allo
 .error { border-left: 2px solid #A8322D; padding: 0.75rem 1rem; background: #fff; color: #A8322D; }
 
 /* ---- 404 ---- */
-.notfound-code { font-family: var(--serif); font-size: 3rem; color: var(--rule); margin: 0; }
+.notfound-code { font-family: var(--serif); font-size: 3rem; color: var(--muted); margin: 0; }
 
 /* ---- Footer ---- */
 .site-footer {
@@ -181,7 +182,7 @@ button:disabled { background: var(--rule); color: var(--muted); cursor: not-allo
   font: inherit;
   color: #1F2328;
   background-color: #FFFDF8;
-  border: 1px solid #D8D4C6;
+  border: 1px solid var(--field-border);
   border-radius: 3px;
   cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%232F5D50' stroke-width='1.5'/%3E%3C/svg%3E");
@@ -199,3 +200,5 @@ button:disabled { background: var(--rule); color: var(--muted); cursor: not-allo
   color: #8A8578;
   cursor: not-allowed;
 }
+
+

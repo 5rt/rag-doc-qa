@@ -1,10 +1,32 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>web</title>
+
+    <!-- Static fallbacks. Seo.tsx overrides these per route for Googlebot,
+         which renders JS. Social crawlers (LinkedIn, Slack, WhatsApp) do not
+         run JS and only ever see what is in this file. -->
+    <title>RAG Document Q&amp;A - ask questions about your own documents</title>
+    <meta
+      name="description"
+      content="Upload a PDF or text file and ask questions about it in plain English. Every answer is built from passages retrieved out of your own document and cites the text it came from."
+    />
+    <meta name="theme-color" content="#2F5D50" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="RAG Document Q&amp;A" />
+    <meta property="og:title" content="RAG Document Q&amp;A - ask questions about your own documents" />
+    <meta
+      property="og:description"
+      content="Upload a PDF or text file and ask questions about it in plain English. Answers cite the passage they came from."
+    />
+    <!-- TODO: og:url and og:image once the real domain is settled and
+         public/og-default.png exists. Both need absolute URLs. Seo.tsx already
+         points at og-default.png, which is currently a 404. -->
+
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <div id="root"></div>

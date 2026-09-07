@@ -1,0 +1,11 @@
+﻿# Replace the Sitemap host with the real domain before deploying.
+User-agent: *
+Allow: /$
+Allow: /how-it-works
+
+# Nothing useful for a crawler here, and /ask hits the Gemini quota on load.
+Disallow: /upload
+Disallow: /ask
+Disallow: /api/
+
+Sitemap: https://ragdocqa.app/sitemap.xml
