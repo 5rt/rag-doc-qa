@@ -1,4 +1,4 @@
-﻿export const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://ragdocqa.app';
+﻿import { SITE_URL } from './siteUrl';
 
 type SeoProps = {
   title: string;
@@ -40,3 +40,4 @@ export default function Seo({
     </>
   );
 }
+
