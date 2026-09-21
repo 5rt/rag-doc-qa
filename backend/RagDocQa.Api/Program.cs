@@ -21,7 +21,7 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
 {
     o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    o.KnownNetworks.Clear();
+    o.KnownIPNetworks.Clear();
     o.KnownProxies.Clear();
 });
 
@@ -40,13 +40,12 @@ builder.Services.AddRateLimiter(options =>
             ctx.HttpContext.Response.Headers.RetryAfter =
                 ((int)retry.TotalSeconds).ToString();
 
-        ctx.HttpContext.Response.ContentType = "application/problem+json";
         await ctx.HttpContext.Response.WriteAsJsonAsync(new
         {
             status = 429,
             title  = "Too many requests",
             detail = "This is a public demo on a shared API quota. Wait a minute and try again."
-        }, token);
+        }, options: null, contentType: "application/problem+json", cancellationToken: token);
     };
 
     options.GlobalLimiter = PartitionedRateLimiter.CreateChained(
@@ -95,8 +94,6 @@ var app = builder.Build();
 app.Logger.LogInformation(
     "env={Env} perIp={PerIp} askPerIp={AskPerIp} askPerDay={AskPerDay}",
     app.Environment.EnvironmentName, perIpPerMinute, askPerIpPerMinute, askPerDay);
-
-// Create the vector index on startup if it doesn't already exist.
 
 // Create the vector index on startup if it doesn't already exist.
 // CreateOrUpdate is idempotent — which means it also silently no-ops if the

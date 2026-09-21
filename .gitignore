@@ -3,6 +3,9 @@ bin/
 obj/
 *.user
 appsettings.Development.json
+publish/
+publish.zip
+.azure/
 
 # Node
 node_modules/
