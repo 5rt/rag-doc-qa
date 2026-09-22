@@ -1,9 +1,12 @@
-﻿# rag-doc-qa
+# rag-doc-qa
 
 Ask questions about your own documents in plain English. Answers are built only
 from passages retrieved out of the documents you upload, and every answer cites
 the passage it came from. When the answer is not in your documents, it says so
 instead of guessing.
+
+**Live:** https://happy-mushroom-0162ee100.6.azurestaticapps.net (behind an
+access key)
 
 **Stack:** React 19 + TypeScript + Vite 8 · ASP.NET Core (net10.0) ·
 Azure AI Search · Azure SQL · Gemini API
@@ -93,6 +96,44 @@ Terminal 2:
 
 Then http://localhost:5173
 
+Tests (chunker and PDF line rebuilding):
+
+    dotnet test RagDocQa.slnx
+
+## Deployment
+
+Every push to `main` runs CI, and if lint, build, format and tests pass, deploys
+both halves:
+
+| Part | Azure resource | How |
+|---|---|---|
+| API | App Service `ragdocqa-api` (Linux, F1) | `dotnet publish` + publish profile |
+| Frontend | Static Web App `ragdocqa-web` (Free) | `npm run build` with `VITE_API_URL` baked in, then upload `dist/` |
+
+Both live in resource group `rag-doc-qa`. CI needs two repository secrets:
+
+    AZURE_WEBAPP_PUBLISH_PROFILE     az webapp deployment list-publishing-profiles -g rag-doc-qa -n ragdocqa-api --xml
+    AZURE_STATIC_WEB_APPS_API_TOKEN  az staticwebapp secrets list -g rag-doc-qa -n ragdocqa-web --query properties.apiKey -o tsv
+
+The API's secrets are App Service application settings, with `__` for nesting:
+`Llm__ApiKey`, `Search__Endpoint`, `Search__ApiKey`, `ConnectionStrings__Default`,
+`Auth__ApiKey`, plus `Cors__AllowedOrigin` set to the Static Web App URL.
+
+Gotchas hit on the first deploy:
+
+- **Basic publishing auth must be on** for the publish profile to work
+  (`basicPublishingCredentialsPolicies/scm`, `allow=true`). A profile fetched
+  while it was off has a blank password and fails with "Publish profile is
+  invalid" — re-fetch it after turning it on.
+- **The API will not start without `Auth__ApiKey`** and returns 503 until it is
+  set. To rotate the key, set a new value; the frontend clears the old key on
+  its first 401 and asks again.
+- **`staticwebapp.config.json`** rewrites unknown paths to `index.html`, so
+  refreshing `/ask` does not 404.
+- **The host appears in** `index.html` (og tags), `public/sitemap.xml`,
+  `public/robots.txt` and `src/seo/siteUrl.ts`. Change all four if the domain
+  changes.
+
 ## API
 
 Every route requires an `X-Api-Key` header matching the configured
@@ -125,5 +166,6 @@ key is also throttled. The frontend asks for the key once and keeps it in
 - **`SearchSetup` uses `CreateOrUpdateIndexAsync`.** Deleting the index in the
   Azure portal and restarting does *not* reliably reset it — if the delete has
   not propagated, the call finds the index still present and silently no-ops,
-  leaving every old vector in place. Use `DELETE /api/documents/{id}`.
+  leaving every old vector in place. Delete documents from the Upload page
+  (or `DELETE /api/documents/{id}`) instead.
 - **Chunking is O(n^2)** in word count. Irrelevant at this scale.

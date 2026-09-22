@@ -192,6 +192,30 @@ button:disabled { background: var(--rule); color: var(--muted); cursor: not-allo
   color: #33363C;
 }
 
+/* ---- Document list ---- */
+.doc-list { list-style: none; margin: 0; padding: 0; }
+.doc-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.doc-name { margin: 0; overflow-wrap: anywhere; }
+.doc-list .source-meta { margin: 0; }
+
+.button-quiet {
+  flex-shrink: 0;
+  background: none;
+  color: var(--error);
+  border: 1px solid transparent;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.9rem;
+}
+.button-quiet:hover:not(:disabled) { background: none; border-color: var(--error); }
+.button-quiet:disabled { background: none; }
+
 /* ---- Status ---- */
 .notice { border-left: 2px solid var(--accent); padding: 0.75rem 1rem; background: var(--field); }
 .error { border-left: 2px solid var(--error); padding: 0.75rem 1rem; background: var(--field); color: var(--error); }

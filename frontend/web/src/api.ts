@@ -55,3 +55,10 @@ export async function listDocuments(signal?: AbortSignal) {
   const response = await fetch(`${BASE}/api/documents`, { headers: authHeaders(), signal });
   return handle<DocumentSummary[]>(response);
 }
+export async function deleteDocument(id: string) {
+  const response = await fetch(`${BASE}/api/documents/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  return handle<{ chunksDeleted: number }>(response);
+}
