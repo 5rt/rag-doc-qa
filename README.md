@@ -100,6 +100,26 @@ Tests (chunker and PDF line rebuilding):
 
     dotnet test RagDocQa.slnx
 
+## Evaluation
+
+`eval/run.mjs` measures retrieval and grounding against a running API. It
+uploads `eval/handbook.txt` (a fictional 2,800-word staff handbook, 10
+passages), asks 15 paraphrased questions scoped to it, checks 3 questions the
+handbook cannot answer, then deletes the document:
+
+    API_KEY=... node eval/run.mjs          # live API; API_URL=... for local
+
+- **Retrieval:** where the passage holding the answer ranks in the top 5
+  (hit@1, hit@5, MRR). Questions avoid the handbook's wording, so matches have
+  to come from meaning.
+- **Answers:** whether the answer contains the expected fact.
+- **Refusals:** whether unanswerable questions get "That is not covered in the
+  uploaded documents."
+
+Run it before and after changing chunk size, overlap, top-k or the prompt. It
+spends about 40 Gemini calls and takes around three minutes, paced to stay
+under the per-IP ask limit.
+
 ## Deployment
 
 Every push to `main` runs CI, and if lint, build, format and tests pass, deploys
