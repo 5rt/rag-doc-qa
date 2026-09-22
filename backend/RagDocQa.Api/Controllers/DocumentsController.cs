@@ -19,9 +19,11 @@ public record DocumentSummary(Guid Id, string FileName, int ChunkCount, DateTime
 [Route("api/documents")]
 public class DocumentsController(GeminiClient gemini, IConfiguration config) : ControllerBase
 {
-    // "Database is not currently available" - serverless auto-pause, not a
-    // fault. Self-healing: the next call succeeds once the database wakes.
-    private const int SqlDatabasePaused = 40613;
+    // Serverless auto-pause, not a fault. Self-healing: the next call succeeds
+    // once the database wakes. A resume shows up as either 40613 ("database is
+    // not currently available") or -2, a connection timeout while the resume
+    // outlasts Connect Timeout - seen in production at 59 s post-login.
+    internal static bool IsDatabaseWaking(SqlException ex) => ex.Number is 40613 or -2;
 
     private SearchClient CreateSearchClient() => new(
         new Uri(config["Search:Endpoint"]!),
@@ -114,7 +116,7 @@ public class DocumentsController(GeminiClient gemini, IConfiguration config) : C
                 "INSERT INTO Documents (Id, FileName, ChunkCount) VALUES (@Id, @FileName, @ChunkCount)",
                 new { Id = documentId, FileName = file.FileName, ChunkCount = chunks.Count });
         }
-        catch (SqlException ex) when (ex.Number == SqlDatabasePaused)
+        catch (SqlException ex) when (IsDatabaseWaking(ex))
         {
             return StatusCode(503, new
             {
@@ -165,7 +167,7 @@ public class DocumentsController(GeminiClient gemini, IConfiguration config) : C
                 "SELECT Id, FileName, ChunkCount, UploadedUtc FROM Documents ORDER BY UploadedUtc DESC");
             return Ok(docs);
         }
-        catch (SqlException ex) when (ex.Number == SqlDatabasePaused)
+        catch (SqlException ex) when (IsDatabaseWaking(ex))
         {
             return StatusCode(503, new
             {
@@ -203,7 +205,7 @@ public class DocumentsController(GeminiClient gemini, IConfiguration config) : C
         {
             rows = await sql.ExecuteAsync("DELETE FROM Documents WHERE Id = @Id", new { Id = id });
         }
-        catch (SqlException ex) when (ex.Number == SqlDatabasePaused)
+        catch (SqlException ex) when (IsDatabaseWaking(ex))
         {
             return StatusCode(503, new
             {
