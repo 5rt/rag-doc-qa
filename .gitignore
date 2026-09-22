@@ -29,3 +29,7 @@ build/
 .DS_Store
 Thumbs.db
 .vs/
+# Locally installed agent skills (npx skills add)
+.agents/
+.claude/skills/
+skills-lock.json
