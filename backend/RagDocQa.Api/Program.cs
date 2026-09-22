@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using RagDocQa.Api.Auth;
 using RagDocQa.Api.Search;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +25,9 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
     o.KnownIPNetworks.Clear();
     o.KnownProxies.Clear();
 });
+
+var apiKey = builder.Configuration["Auth:ApiKey"]
+    ?? throw new InvalidOperationException("Auth:ApiKey is not configured.");
 
 var rl = builder.Configuration.GetSection("RateLimits");
 var perIpPerMinute = rl.GetValue("PerIpPerMinute", 30);
@@ -111,7 +115,8 @@ if (app.Environment.IsDevelopment())
 app.UseForwardedHeaders();   // first — everything below reads scheme and IP
 app.UseHttpsRedirection();
 app.UseCors();               // before the limiter, so 429s carry CORS headers
-app.UseRateLimiter();
+app.UseRateLimiter();        // before the key check, so guessing the key is also rate-limited
+app.UseApiKeyAuth(apiKey);
 app.UseAuthorization();
 app.MapControllers();
 

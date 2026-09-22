@@ -157,6 +157,10 @@ button:disabled { background: var(--rule); color: var(--muted); cursor: not-allo
 .notice-success { border-left-color: var(--accent); }
 .error { border-left: 2px solid #A8322D; padding: 0.75rem 1rem; background: #fff; color: #A8322D; }
 
+/* ---- Auth gate ---- */
+.auth-gate { max-width: var(--measure); margin: 4rem auto; padding: 0 1.5rem; }
+.auth-gate .upload-form { max-width: 32ch; }
+
 /* ---- 404 ---- */
 .notfound-code { font-family: var(--serif); font-size: 3rem; color: var(--muted); margin: 0; }
 

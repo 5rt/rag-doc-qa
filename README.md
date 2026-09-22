@@ -60,13 +60,14 @@ embedding, not just readability.
 
 Needs .NET 10 SDK and Node 20+.
 
-Four secrets, via user secrets — never in a file:
+Five secrets, via user secrets — never in a file:
 
     cd backend/RagDocQa.Api
     dotnet user-secrets set "Llm:ApiKey" "..."
     dotnet user-secrets set "Search:Endpoint" "https://<name>.search.windows.net"
     dotnet user-secrets set "Search:ApiKey" "..."
     dotnet user-secrets set "ConnectionStrings:Default" "..."
+    dotnet user-secrets set "Auth:ApiKey" "<any long random string>"
 
 The SQL table:
 
@@ -94,6 +95,12 @@ Then http://localhost:5173
 
 ## API
 
+Every route requires an `X-Api-Key` header matching the configured
+`Auth:ApiKey` secret. A wrong or missing key gets a 401 before anything else
+runs — before CORS-exempt preflight, but after rate limiting, so guessing the
+key is also throttled. The frontend asks for the key once and keeps it in
+`localStorage`.
+
 | Method | Route | Notes |
 |---|---|---|
 | POST | `/api/documents` | multipart upload, PDF or txt, 20 MB cap |
@@ -103,9 +110,10 @@ Then http://localhost:5173
 
 ## Known limits
 
-- **No authentication.** Every endpoint is open. Fine on localhost; not fine
-  deployed, where anyone with the URL can upload, list every filename, and spend
-  the Gemini quota.
+- **One shared key, not per-user accounts.** Anyone with the key can upload,
+  list every filename, and spend the Gemini quota — it stops strangers, not a
+  trusted-but-nosy holder of the link. Fine for a single-owner demo; would need
+  real accounts to support distinct users.
 - **No deletion of uploaded text beyond the delete endpoint.** Document text is
   stored recoverably in the search index and sent to Google's API for embedding
   and answering.
