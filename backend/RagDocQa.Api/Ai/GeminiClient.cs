@@ -26,20 +26,13 @@ public class GeminiClient(HttpClient http, IConfiguration config)
     /// <summary>Turns one piece of text into a 768-number vector.</summary>
     public async Task<float[]> EmbedAsync(string text, string taskType)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{Base}/models/{Embed}:embedContent")
+        using var response = await PostAsync($"{Base}/models/{Embed}:embedContent", new
         {
-            Content = JsonContent.Create(new
-            {
-                model = $"models/{Embed}",
-                content = new { parts = new[] { new { text } } },
-                taskType,
-                outputDimensionality = Search.SearchSetup.Dimensions
-            })
-        };
-        request.Headers.Add("x-goog-api-key", Key);
-
-        var response = await http.SendAsync(request);
-        await ThrowIfFailedAsync(response);
+            model = $"models/{Embed}",
+            content = new { parts = new[] { new { text } } },
+            taskType,
+            outputDimensionality = Search.SearchSetup.Dimensions
+        });
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
         var values = json.GetProperty("embedding").GetProperty("values")
@@ -70,22 +63,44 @@ public class GeminiClient(HttpClient http, IConfiguration config)
             Question: {question}
             """;
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{Base}/models/{Chat}:generateContent")
+        using var response = await PostAsync($"{Base}/models/{Chat}:generateContent", new
         {
-            Content = JsonContent.Create(new
-            {
-                contents = new[] { new { parts = new[] { new { text = prompt } } } }
-            })
-        };
-        request.Headers.Add("x-goog-api-key", Key);
-
-        var response = await http.SendAsync(request);
-        await ThrowIfFailedAsync(response);
+            contents = new[] { new { parts = new[] { new { text = prompt } } } }
+        });
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
         return json.GetProperty("candidates")[0]
                    .GetProperty("content").GetProperty("parts")[0]
                    .GetProperty("text").GetString() ?? "";
+    }
+
+    /// <summary>
+    /// Gemini answers 503 "model overloaded" for a few seconds at a time under
+    /// load - one live ask in three in testing. Two short retries hide that.
+    /// 429 is not retried: it means the daily quota is gone, and retrying only
+    /// burns more of the per-minute allowance.
+    /// </summary>
+    private async Task<HttpResponseMessage> PostAsync(string url, object body)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            // A request message cannot be sent twice, so build a new one each time.
+            using var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = JsonContent.Create(body)
+            };
+            request.Headers.Add("x-goog-api-key", Key);
+
+            var response = await http.SendAsync(request);
+            if (response.StatusCode != HttpStatusCode.ServiceUnavailable || attempt == 3)
+            {
+                await ThrowIfFailedAsync(response);
+                return response;
+            }
+
+            response.Dispose();
+            await Task.Delay(TimeSpan.FromSeconds(2 * attempt));
+        }
     }
 
     private static async Task ThrowIfFailedAsync(HttpResponseMessage response)

@@ -55,13 +55,21 @@ async function call(path, init) {
   return body;
 }
 
-async function ask(question, documentId) {
+async function ask(question, documentId, retried = false) {
   await sleep(ASK_GAP_MS);
-  return call('/api/ask', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, documentId }),
-  });
+  try {
+    return await call('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, documentId }),
+    });
+  } catch (err) {
+    // 502 is Gemini being briefly overloaded (it returns 503 upstream).
+    if (retried || !/: 502 /.test(err.message)) throw err;
+    console.log('\t(Gemini busy, retrying in 15 s)');
+    await sleep(15000);
+    return ask(question, documentId, true);
+  }
 }
 
 const text = await readFile(new URL('./handbook.txt', import.meta.url));
