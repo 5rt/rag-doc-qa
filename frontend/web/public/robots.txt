@@ -1,4 +1,3 @@
-﻿# Replace the Sitemap host with the real domain before deploying.
 User-agent: *
 Allow: /$
 Allow: /how-it-works
@@ -8,4 +7,4 @@ Disallow: /upload
 Disallow: /ask
 Disallow: /api/
 
-Sitemap: https://ragdocqa.app/sitemap.xml
+Sitemap: https://happy-mushroom-0162ee100.6.azurestaticapps.net/sitemap.xml

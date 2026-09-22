@@ -54,3 +54,53 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  deploy-backend:
+    name: Deploy API
+    needs: [backend, frontend]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Publish
+        run: dotnet publish backend/RagDocQa.Api -c Release -o publish
+
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ragdocqa-api
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: publish
+
+  deploy-frontend:
+    name: Deploy web
+    needs: [backend, frontend]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/web
+    env:
+      VITE_API_URL: https://ragdocqa-api.azurewebsites.net
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/web/package-lock.json
+
+      - run: npm ci
+      - run: npm run build
+
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: frontend/web/dist
+          skip_app_build: true
