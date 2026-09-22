@@ -17,10 +17,10 @@ public sealed class GeminiException(HttpStatusCode status, string detail)
 
 public class GeminiClient(HttpClient http, IConfiguration config)
 {
-    private string Base  => config["Llm:BaseUrl"]!;
+    private string Base => config["Llm:BaseUrl"]!;
     private string Embed => config["Llm:EmbeddingModel"]!;
-    private string Chat  => config["Llm:ChatModel"]!;
-    private string Key   => config["Llm:ApiKey"]
+    private string Chat => config["Llm:ChatModel"]!;
+    private string Key => config["Llm:ApiKey"]
         ?? throw new InvalidOperationException("Llm:ApiKey is not configured.");
 
     /// <summary>Turns one piece of text into a 768-number vector.</summary>

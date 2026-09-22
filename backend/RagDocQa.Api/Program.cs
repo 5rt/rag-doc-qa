@@ -25,10 +25,10 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
     o.KnownProxies.Clear();
 });
 
-var rl                = builder.Configuration.GetSection("RateLimits");
-var perIpPerMinute    = rl.GetValue("PerIpPerMinute", 30);
+var rl = builder.Configuration.GetSection("RateLimits");
+var perIpPerMinute = rl.GetValue("PerIpPerMinute", 30);
 var askPerIpPerMinute = rl.GetValue("AskPerIpPerMinute", 5);
-var askPerDay         = rl.GetValue("AskPerDay", 150);
+var askPerDay = rl.GetValue("AskPerDay", 150);
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -43,7 +43,7 @@ builder.Services.AddRateLimiter(options =>
         await ctx.HttpContext.Response.WriteAsJsonAsync(new
         {
             status = 429,
-            title  = "Too many requests",
+            title = "Too many requests",
             detail = "This is a public demo on a shared API quota. Wait a minute and try again."
         }, options: null, contentType: "application/problem+json", cancellationToken: token);
     };
@@ -56,8 +56,8 @@ builder.Services.AddRateLimiter(options =>
                 _ => new FixedWindowRateLimiterOptions
                 {
                     PermitLimit = perIpPerMinute,
-                    Window      = TimeSpan.FromMinutes(1),
-                    QueueLimit  = 0
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0
                 })),
 
         // b. per-IP on /api/ask — the endpoint that spends Gemini quota
@@ -67,8 +67,8 @@ builder.Services.AddRateLimiter(options =>
                     _ => new FixedWindowRateLimiterOptions
                     {
                         PermitLimit = askPerIpPerMinute,
-                        Window      = TimeSpan.FromMinutes(1),
-                        QueueLimit  = 0
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0
                     })
                 : RateLimitPartition.GetNoLimiter<string>("none")),
 
@@ -81,8 +81,8 @@ builder.Services.AddRateLimiter(options =>
                     _ => new FixedWindowRateLimiterOptions
                     {
                         PermitLimit = askPerDay,
-                        Window      = TimeSpan.FromHours(24),
-                        QueueLimit  = 0
+                        Window = TimeSpan.FromHours(24),
+                        QueueLimit = 0
                     })
                 : RateLimitPartition.GetNoLimiter<string>("none")));
 

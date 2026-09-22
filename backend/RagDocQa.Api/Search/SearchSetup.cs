@@ -34,7 +34,7 @@ public static class SearchSetup
             },
             VectorSearch = new VectorSearch
             {
-                Profiles   = { new VectorSearchProfile("hnsw-profile", "hnsw-config") },
+                Profiles = { new VectorSearchProfile("hnsw-profile", "hnsw-config") },
                 Algorithms = { new HnswAlgorithmConfiguration("hnsw-config") }
             }
         };
