@@ -1,17 +1,18 @@
-﻿import { Link, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 
 export default function Layout() {
   return (
     <>
+      <a href="#main" className="skip-link">Skip to content</a>
       <header className="site-header">
         <Link to="/" className="site-title">Document Q&amp;A</Link>
         <nav aria-label="Main">
-          <Link to="/upload">Upload</Link>
-          <Link to="/ask">Ask</Link>
-          <Link to="/how-it-works">How it works</Link>
+          <NavLink to="/upload">Upload</NavLink>
+          <NavLink to="/ask">Ask</NavLink>
+          <NavLink to="/how-it-works">How it works</NavLink>
         </nav>
       </header>
-      <main><Outlet /></main>
+      <main id="main"><Outlet /></main>
       <footer className="site-footer">
         <p>
           Built with React, ASP.NET Core, Azure AI Search and SQL Server.{' '}

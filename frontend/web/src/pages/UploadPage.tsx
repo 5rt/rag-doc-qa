@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { uploadDocument } from "../api";
 import Seo from "../seo/Seo";
@@ -47,7 +47,7 @@ export default function UploadPage() {
           disabled={busy}
         />
         <button type="button" onClick={handleSubmit} disabled={!file || busy}>
-          {busy ? "Indexing..." : "Upload and index"}
+          {busy ? "Indexing…" : "Upload and index"}
         </button>
       </div>
 
@@ -58,7 +58,7 @@ export default function UploadPage() {
         </p>
       )}
       {result && (
-        <div role="status" className="notice notice-success">
+        <div role="status" className="notice">
           <strong>Done.</strong> {result}{" "}
           <Link to="/ask">Ask a question about it</Link>
         </div>

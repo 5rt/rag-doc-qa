@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --paper: #FAFAF7;
   --ink: #1F2328;
   --muted: #66695F;
@@ -6,6 +6,9 @@
   --field-border: #8C8776;
   --accent: #2F5D50;
   --highlight: #FBF3C9;
+  --field: #fff;
+  --accent-hover: #24473D;
+  --error: #A8322D;
 
   --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
   --serif: Georgia, "Iowan Old Style", serif;
@@ -24,6 +27,18 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  background: var(--accent);
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  border-radius: 3px;
+  text-decoration: none;
+}
+.skip-link:focus { top: 1rem; }
 
 /* ---- Header ---- */
 .site-header {
@@ -51,8 +66,10 @@ body {
   text-decoration: none;
   padding-bottom: 2px;
   border-bottom: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
 }
-.site-header nav a:hover { color: var(--ink); border-bottom-color: var(--accent); }
+.site-header nav a:hover { color: var(--ink); border-bottom-color: var(--rule); }
+.site-header nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
 
 main { max-width: var(--measure); margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
 
@@ -64,6 +81,7 @@ h1 {
   line-height: 1.15;
   letter-spacing: -0.02em;
   margin: 0 0 0.75rem;
+  text-wrap: balance;
 }
 h2 {
   font-size: 0.85rem;
@@ -73,7 +91,7 @@ h2 {
   padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--rule);
 }
-p { margin: 0 0 1rem; }
+p { margin: 0 0 1rem; text-wrap: pretty; }
 a { color: var(--accent); text-underline-offset: 3px; }
 
 /* ---- Forms ---- */
@@ -83,13 +101,33 @@ a { color: var(--accent); text-underline-offset: 3px; }
 textarea, input[type="file"] {
   font: inherit;
   color: inherit;
-  background: #fff;
+  background: var(--field);
   border: 1px solid var(--field-border);
   border-radius: 3px;
   padding: 0.7rem 0.8rem;
   width: 100%;
   resize: vertical;
 }
+input[type="password"] {
+  font: inherit;
+  background: var(--field);
+  border: 1px solid var(--field-border);
+  border-radius: 3px;
+  padding: 0.6rem 0.75rem;
+}
+input[type="file"]::file-selector-button {
+  font: inherit;
+  font-size: 0.9rem;
+  margin-right: 0.9rem;
+  padding: 0.35rem 0.8rem;
+  color: var(--accent);
+  background: var(--paper);
+  border: 1px solid var(--field-border);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+input[type="file"]::file-selector-button:hover { background: var(--highlight); }
 textarea:focus-visible, input:focus-visible, button:focus-visible, a:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -105,8 +143,10 @@ button {
   border-radius: 3px;
   padding: 0.6rem 1.2rem;
   cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
 }
-button:hover:not(:disabled) { background: #24473D; }
+button:hover:not(:disabled) { background: var(--accent-hover); }
+button:active:not(:disabled) { transform: translateY(1px); }
 button:disabled { background: var(--rule); color: var(--muted); cursor: not-allowed; }
 
 /* ---- The answer ---- */
@@ -153,9 +193,8 @@ button:disabled { background: var(--rule); color: var(--muted); cursor: not-allo
 }
 
 /* ---- Status ---- */
-.notice { border-left: 2px solid var(--accent); padding: 0.75rem 1rem; background: #fff; }
-.notice-success { border-left-color: var(--accent); }
-.error { border-left: 2px solid #A8322D; padding: 0.75rem 1rem; background: #fff; color: #A8322D; }
+.notice { border-left: 2px solid var(--accent); padding: 0.75rem 1rem; background: var(--field); }
+.error { border-left: 2px solid var(--error); padding: 0.75rem 1rem; background: var(--field); color: var(--error); }
 
 /* ---- Auth gate ---- */
 .auth-gate { max-width: var(--measure); margin: 4rem auto; padding: 0 1.5rem; }
@@ -184,8 +223,8 @@ button:disabled { background: var(--rule); color: var(--muted); cursor: not-allo
   max-width: 68ch;
   padding: 0.6rem 2.2rem 0.6rem 0.75rem;
   font: inherit;
-  color: #1F2328;
-  background-color: #FFFDF8;
+  color: var(--ink);
+  background-color: var(--field);
   border: 1px solid var(--field-border);
   border-radius: 3px;
   cursor: pointer;
@@ -196,12 +235,12 @@ button:disabled { background: var(--rule); color: var(--muted); cursor: not-allo
 }
 
 .ask-form select:focus-visible {
-  outline: 2px solid #2F5D50;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .ask-form select:disabled {
-  color: #8A8578;
+  color: var(--muted);
   cursor: not-allowed;
 }
 

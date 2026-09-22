@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { askQuestion, listDocuments } from "../api";
 import type { AskResponse, DocumentSummary } from "../types";
@@ -10,13 +10,14 @@ export default function AskPage() {
   const [result, setResult] = useState<AskResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const controller = useRef<AbortController | null>(null);
-  const [docs, setDocs] = useState<DocumentSummary[]>([]);
+  // null until the list loads, so the empty-state notice does not flash.
+  const [docs, setDocs] = useState<DocumentSummary[] | null>(null);
   const [documentId, setDocumentId] = useState("");
 
   useEffect(() => {
     listDocuments()
       .then(setDocs)
-      .catch(() => setDocs([]));
+      .catch(() => setDocs(null));
   }, []);
 
   // Cancel any in-flight request if the user navigates away, so we never
@@ -45,7 +46,7 @@ export default function AskPage() {
     }
   }
 
-  const scopeName = docs.find((d) => d.id === documentId)?.fileName;
+  const scopeName = docs?.find((d) => d.id === documentId)?.fileName;
 
   return (
     <>
@@ -60,16 +61,22 @@ export default function AskPage() {
         each answer.
       </p>
 
+      {docs?.length === 0 && (
+        <p role="status" className="notice">
+          No documents yet. <Link to="/upload">Upload one</Link> before asking.
+        </p>
+      )}
+
       <div className="ask-form">
         <label htmlFor="doc-filter">Search in</label>
         <select
           id="doc-filter"
           value={documentId}
           onChange={(e) => setDocumentId(e.target.value)}
-          disabled={busy || docs.length === 0}
+          disabled={busy || !docs?.length}
         >
           <option value="">All documents</option>
-          {docs.map((d) => (
+          {docs?.map((d) => (
             <option key={d.id} value={d.id}>
               {d.fileName}
             </option>
@@ -90,7 +97,7 @@ export default function AskPage() {
           onClick={handleAsk}
           disabled={busy || !question.trim()}
         >
-          {busy ? "Searching..." : "Ask"}
+          {busy ? "Searching…" : "Ask"}
         </button>
       </div>
 
