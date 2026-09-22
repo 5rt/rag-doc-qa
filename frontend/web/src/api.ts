@@ -1,4 +1,4 @@
-﻿import { clearApiKey, getApiKey } from './apiKey';
+import { clearApiKey, getApiKey } from './apiKey';
 import type { AskResponse, DocumentSummary, UploadResponse } from './types';
 
 // Empty base means "same origin", so the Vite dev proxy handles /api in dev.
@@ -51,9 +51,26 @@ export async function askQuestion(
   return handle<AskResponse>(response);
 }
 
-export async function listDocuments(signal?: AbortSignal) {
-  const response = await fetch(`${BASE}/api/documents`, { headers: authHeaders(), signal });
-  return handle<DocumentSummary[]>(response);
+/**
+ * The first call after an idle hour wakes both the free-tier App Service and
+ * the serverless database. That call can hang for a minute and then come back
+ * 503 once the database connection times out; by then the database is usually
+ * awake. So: tell the caller as soon as the call is slow, and retry 503s.
+ * Only this read retries - an upload retry would spend embedding quota again.
+ */
+export async function listDocuments(onSlow?: () => void) {
+  const timer = setTimeout(() => onSlow?.(), 3000);
+  try {
+    for (let attempt = 1; ; attempt++) {
+      const response = await fetch(`${BASE}/api/documents`, { headers: authHeaders() });
+      if (response.status !== 503 || attempt === 3) {
+        return await handle<DocumentSummary[]>(response);
+      }
+      onSlow?.();
+    }
+  } finally {
+    clearTimeout(timer);
+  }
 }
 export async function deleteDocument(id: string) {
   const response = await fetch(`${BASE}/api/documents/${id}`, {

@@ -13,11 +13,13 @@ export default function AskPage() {
   // null until the list loads, so the empty-state notice does not flash.
   const [docs, setDocs] = useState<DocumentSummary[] | null>(null);
   const [documentId, setDocumentId] = useState("");
+  const [waking, setWaking] = useState(false);
 
   useEffect(() => {
-    listDocuments()
+    listDocuments(() => setWaking(true))
       .then(setDocs)
-      .catch(() => setDocs(null));
+      .catch(() => setDocs(null))
+      .finally(() => setWaking(false));
   }, []);
 
   // Cancel any in-flight request if the user navigates away, so we never
@@ -60,6 +62,13 @@ export default function AskPage() {
         Answers come only from your uploaded documents. Sources are shown below
         each answer.
       </p>
+
+      {waking && (
+        <p role="status" className="notice">
+          Waking up the server. The first visit after a quiet spell can take up
+          to a minute.
+        </p>
+      )}
 
       {docs?.length === 0 && (
         <p role="status" className="notice">

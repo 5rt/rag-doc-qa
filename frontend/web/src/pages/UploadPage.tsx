@@ -11,11 +11,13 @@ export default function UploadPage() {
   const [error, setError] = useState<string | null>(null);
   const [docs, setDocs] = useState<DocumentSummary[] | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
 
   function refresh() {
-    listDocuments()
+    listDocuments(() => setWaking(true))
       .then(setDocs)
-      .catch(() => setDocs(null));
+      .catch(() => setDocs(null))
+      .finally(() => setWaking(false));
   }
 
   useEffect(refresh, []);
@@ -63,6 +65,13 @@ export default function UploadPage() {
       <p>
         PDF or plain text, up to 20 MB. Scanned PDFs will not work without OCR.
       </p>
+
+      {waking && (
+        <p role="status" className="notice">
+          Waking up the server. The first visit after a quiet spell can take up
+          to a minute.
+        </p>
+      )}
 
       <div className="upload-form">
         <label htmlFor="file-input">Choose a file</label>

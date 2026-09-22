@@ -31,7 +31,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         setError('That key was not accepted.');
         return;
       }
-      if (!response.ok) {
+      // 503 means the database is waking up. The key check runs before the
+      // controller, so reaching it at all means the key was accepted.
+      if (!response.ok && response.status !== 503) {
         setError(`Could not verify the key (${response.status}). Try again.`);
         return;
       }
