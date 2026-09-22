@@ -63,7 +63,7 @@ embedding, not just readability.
 
 Needs .NET 10 SDK and Node 20+.
 
-Five secrets, via user secrets — never in a file:
+Five secrets:
 
     cd backend/RagDocQa.Api
     dotnet user-secrets set "Llm:ApiKey" "..."
