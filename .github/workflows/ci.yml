@@ -8,7 +8,7 @@ on:
 
 jobs:
   backend:
-    name: Backend (build, format)
+    name: Backend (build, format, test)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -28,7 +28,12 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Check formatting
-        run: dotnet format --verify-no-changes
+        run: |
+          dotnet format --verify-no-changes
+          dotnet format ../RagDocQa.Tests --verify-no-changes
+
+      - name: Test
+        run: dotnet test ../RagDocQa.Tests --configuration Release
 
   frontend:
     name: Frontend (lint, build)

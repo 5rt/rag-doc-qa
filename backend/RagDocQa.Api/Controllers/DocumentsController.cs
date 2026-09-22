@@ -36,7 +36,7 @@ public class DocumentsController(GeminiClient gemini, IConfiguration config) : C
     /// glyph runs with no separators, which fuses words together and drops line
     /// breaks entirely. Grouping words by vertical position recovers the lines.
     /// </summary>
-    private static string ExtractPageText(Page page)
+    internal static string ExtractPageText(Page page)
     {
         var lines = page.GetWords()
             .GroupBy(w => Math.Round(w.BoundingBox.Bottom, 0))
