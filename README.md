@@ -117,8 +117,10 @@ handbook cannot answer, then deletes the document:
   uploaded documents."
 
 Run it before and after changing chunk size, overlap, top-k or the prompt. It
-spends about 40 Gemini calls and takes around three minutes, paced to stay
-under the per-IP ask limit.
+spends about 40 Gemini calls, 18 of them answers, and takes around three
+minutes, paced to stay under the per-IP ask limit. On the free tier that is
+almost the whole day's answer quota (see Known limits), so run it on a paid
+key or on a day the site is not in use.
 
 ## Deployment
 
@@ -182,7 +184,13 @@ key is also throttled. The frontend asks for the key once and keeps it in
   line. Fine for prose and most CVs, wrong for academic papers.
   `DocstrumBoundingBoxes` ships with PdfPig if this becomes a real problem.
 - **Scanned PDFs need OCR** and are rejected as having no readable text.
-- **Free-tier quota** is 1,500 embedding calls per day, one per chunk.
+- **Free-tier Gemini quota is tiny for answers.** The chat model allows 20
+  `generateContent` calls per day per project, so the whole site can answer
+  about 20 questions a day. Embeddings have a separate, larger quota (one call
+  per chunk on upload, one per question). Quotas reset at midnight Pacific
+  time. A 429 from Gemini is reported as "daily quota used up", though Gemini
+  also returns 429 for per-minute limits. The API's own `AskPerDay` cap (300)
+  never comes into play on the free tier.
 - **`SearchSetup` uses `CreateOrUpdateIndexAsync`.** Deleting the index in the
   Azure portal and restarting does *not* reliably reset it — if the delete has
   not propagated, the call finds the index still present and silently no-ops,
